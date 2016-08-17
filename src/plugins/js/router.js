@@ -67,6 +67,14 @@ define(['durandal/system', 'durandal/app', 'durandal/activator', 'durandal/event
         return instruction.fragment + '?' + instruction.queryString;
     }
 
+    function hasRoute(route) {
+        var routeIndex = $.acuperaSPASettings.hideRoutes.indexOf(route);
+        if (routeIndex !== -1 && route && route !== "") {
+            return true;
+        }
+        return false;
+      }
+
     /**
      * @class Router
      * @uses Events
@@ -826,6 +834,12 @@ define(['durandal/system', 'durandal/app', 'durandal/activator', 'durandal/event
 
             for (var i = 0; i < routes.length; i++) {
                 var current = routes[i];
+
+                if ($.acuperaSPASettings.hideRoutes.length > 0) {
+                    if (hasRoute(current.route)) {
+                        current.nav = false;
+                    }
+                }
 
                 if (current.nav) {
                     if (!system.isNumber(current.nav)) {

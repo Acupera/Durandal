@@ -303,47 +303,49 @@ define(['durandal/system', 'durandal/app', 'durandal/composition', 'durandal/act
             var that = this;
             var dialogContext = contexts[context || 'default'];
 
-            return system.defer(function (dfd) {
-                ensureDialogInstance(obj).then(function (instance) {
-                    var dialogActivator = activator.create();
+            return Q.fcall(function() {
+                return system.defer(function (dfd) {
+                    ensureDialogInstance(obj).then(function (instance) {
+                        var dialogActivator = activator.create();
 
-                    dialogActivator.activateItem(instance, activationData).then(function (success) {
-                        if (success) {
-                            var theDialog = instance.__dialog__ = {
-                                owner: instance,
-                                context: dialogContext,
-                                activator: dialogActivator,
-                                close: function () {
-                                    var args = arguments;
-                                    dialogActivator.deactivateItem(instance, true).then(function (closeSuccess) {
-                                        if (closeSuccess) {
-                                            dialogCount(dialogCount() - 1);
-                                            dialogContext.removeHost(theDialog);
-                                            delete instance.__dialog__;
+                        dialogActivator.activateItem(instance, activationData).then(function (success) {
+                            if (success) {
+                                var theDialog = instance.__dialog__ = {
+                                    owner: instance,
+                                    context: dialogContext,
+                                    activator: dialogActivator,
+                                    close: function () {
+                                        var args = arguments;
+                                        dialogActivator.deactivateItem(instance, true).then(function (closeSuccess) {
+                                            if (closeSuccess) {
+                                                dialogCount(dialogCount() - 1);
+                                                dialogContext.removeHost(theDialog);
+                                                delete instance.__dialog__;
 
-                                            if (args.length === 0) {
-                                                dfd.resolve();
-                                            } else if (args.length === 1) {
-                                                dfd.resolve(args[0]);
-                                            } else {
-                                                dfd.resolve.apply(dfd, args);
+                                                if (args.length === 0) {
+                                                    dfd.resolve();
+                                                } else if (args.length === 1) {
+                                                    dfd.resolve(args[0]);
+                                                } else {
+                                                    dfd.resolve.apply(dfd, args);
+                                                }
                                             }
-                                        }
-                                    });
-                                }
-                            };
+                                        });
+                                    }
+                                };
 
-                            theDialog.settings = that.createCompositionSettings(instance, dialogContext);
-                            dialogContext.addHost(theDialog);
+                                theDialog.settings = that.createCompositionSettings(instance, dialogContext);
+                                dialogContext.addHost(theDialog);
 
-                            dialogCount(dialogCount() + 1);
-                            composition.compose(theDialog.host, theDialog.settings);
-                        } else {
-                            dfd.resolve(false);
-                        }
+                                dialogCount(dialogCount() + 1);
+                                composition.compose(theDialog.host, theDialog.settings);
+                            } else {
+                                dfd.resolve(false);
+                            }
+                        });
                     });
-                });
-            }).promise();
+                }).promise();
+            });
         },
         /**
          * Shows a message box.
@@ -508,6 +510,8 @@ define(['durandal/system', 'durandal/app', 'durandal/composition', 'durandal/act
                 setDialogPosition(child, theDialog);
             });
 
+            $child.trigger("dialog:compositioncomplete", { context: context });
+
             if ($child.hasClass('autoclose') || context.model.autoclose) {
                 $(theDialog.blockout).click(function () {
                     theDialog.close();
@@ -523,13 +527,10 @@ define(['durandal/system', 'durandal/app', 'durandal/composition', 'durandal/act
             var $view = $(view),
                 $window = $(window);
 
-            //We will clear and then set width for dialogs without width set 
+            // We will clear and then set width for dialogs without width set
             if (!$view.data("predefinedWidth")) {
                 $view.css({ width: '' }); //Reset width
             }
-			
-			// clear the height
-            $view.css({ height: '' });
 
             var width = $view.outerWidth(false),
                 height = $view.outerHeight(false),

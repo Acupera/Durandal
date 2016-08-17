@@ -419,7 +419,8 @@ define(['durandal/system', 'durandal/viewLocator', 'durandal/binder', 'durandal/
                 system.acquire(transitionModuleId).then(function (transition) {
                     context.transition = transition;
 
-                    transition(context).then(function () {
+                        context.triggerAttach(context, element);
+
                         if (!context.cacheViews) {
                             if(!context.child){
                                 ko.virtualElements.emptyNode(context.parent);
@@ -439,8 +440,7 @@ define(['durandal/system', 'durandal/viewLocator', 'durandal/binder', 'durandal/
                             show(context.child);
                         }
 
-                        context.triggerAttach(context, element);
-                        endComposition(context, element);
+                        return transition(context).then(function () { endComposition(context, element); ]);
                     });
                 }).fail(function(err){
                     onError(context, 'Failed to load transition (' + transitionModuleId + '). Details: ' + err.message, element);
